@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Runtime.CompilerServices;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using ImGuiNET;
@@ -157,16 +152,29 @@ public static partial class ImGuiUtil
         TextColored(color, text);
     }
 
-    // Create a selectable that copies its text to clipboard when clicked.
+    // Create a selectable that copies a text to clipboard when clicked.
     // Also adds a tooltip on hover.
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static void CopyOnClickSelectable(string text)
+    public static void CopyOnClickSelectable(string text, string copiedText, string tooltip)
     {
         if (ImGui.Selectable(text))
-            ImGui.SetClipboardText(text);
+        {
+            try
+            {
+                ImGui.SetClipboardText(copiedText);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
 
-        HoverTooltip("Click to copy to clipboard.");
+        HoverTooltip(tooltip);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static void CopyOnClickSelectable(string text)
+        => CopyOnClickSelectable(text, text, "Click to copy to clipboard.");
 
     // Draw a single FontAwesomeIcon.
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -184,6 +192,25 @@ public static partial class ImGuiUtil
         ImGui.SameLine();
         ImGui.TextUnformatted(label);
         HoverTooltip(tooltip);
+    }
+
+    // Draw a help marker on a selectable, typically for combo box items.
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static void SelectableHelpMarker(string tooltip)
+    {
+        var hovered = ImGui.IsItemHovered();
+        ImGui.SameLine();
+        using (var _ = ImRaii.PushFont(UiBuilder.IconFont))
+        {
+            using var color = ImRaii.PushColor(ImGuiCol.Text, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+            RightAlign(FontAwesomeIcon.InfoCircle.ToIconString(), ImGui.GetStyle().ItemSpacing.X);
+        }
+
+        if (hovered)
+        {
+            using var tt = ImRaii.Tooltip();
+            ImGui.TextUnformatted(tooltip);
+        }
     }
 
     // Drag between min and max with the given speed and format.

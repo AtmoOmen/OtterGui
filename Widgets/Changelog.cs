@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
-using System.Text;
 using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
 using ImGuiNET;
@@ -34,7 +28,8 @@ public sealed class Changelog : Window
     public const int FreshInstallVersion = int.MaxValue;
 
     public const uint DefaultHeaderColor    = 0xFF60D0D0;
-    public const uint DefaultHighlightColor = 0xFF6060FF;
+    public const uint DefaultImportantColor = 0xFF6060FF;
+    public const uint DefaultHighlightColor = 0xFFFF9090;
 
     private readonly Func<(int, ChangeLogDisplayType)> _getConfig;
     private readonly Action<int, ChangeLogDisplayType> _setConfig;
@@ -173,18 +168,23 @@ public sealed class Changelog : Window
         return this;
     }
 
-    public Changelog RegisterHighlight(string text, ushort level = 0, uint color = DefaultHighlightColor)
+    public Changelog RegisterImportant(string text, ushort level = 0, uint color = DefaultImportantColor)
     {
         var lastEntry = _entries.Last();
         lastEntry.Entries.Add(new Entry(text, color, level));
-        if (color != 0)
-            _entries[^1] = lastEntry with { HasHighlight = true };
+        _entries[^1] = lastEntry with { HasHighlight = true };
         return this;
     }
 
     public Changelog RegisterEntry(string text, ushort level = 0)
     {
         _entries.Last().Entries.Add(new Entry(text, 0, level));
+        return this;
+    }
+
+    public Changelog RegisterHighlight(string text, ushort level = 0, uint color = DefaultHighlightColor)
+    {
+        _entries.Last().Entries.Add(new Entry(text, color, level));
         return this;
     }
 
@@ -214,16 +214,14 @@ public sealed class Changelog : Window
         public void Append(StringBuilder sb)
         {
             sb.Append("> ");
-            if (SubText > 0)
-                sb.Append('`');
             for (var i = 0; i < SubText; ++i)
-                sb.Append("    ");
-            if (SubText > 0)
-                sb.Append('`');
+                sb.Append("  ");
+
+            sb.Append("- ");
             if (Color != 0)
                 sb.Append("**");
-            sb.Append("- ")
-                .Append(Text);
+
+            sb.Append(Text);
             if (Color != 0)
                 sb.Append("**");
 
